@@ -1695,51 +1695,46 @@ window.addEventListener("click", function (event) {
 // ==========================================
 // CSV EXPORT LOGIC
 // ==========================================
+
 window.exportToCSV = function () {
-  // Helper to safely grab text from the dashboard
   const getVal = (id) => {
     const el = document.getElementById(id);
-    // Remove commas from numbers so it doesn't break the CSV format
     return el ? el.innerText.replace(/,/g, "") : "0";
   };
 
-  // Build the CSV rows based on our granular IDs
+  // ===============================
+  // 1. SUMMARY (UNCHANGED STRUCTURE)
+  // ===============================
   const rows = [
     ["Category", "Metric", "Value"],
-    // Housing
     ["Housing & Pop", "Total Homes", getVal("kpi-total-homes")],
     ["Housing & Pop", "Total Houses", getVal("kpi-houses")],
     ["Housing & Pop", "Total Flats", getVal("kpi-flats")],
     ["Housing & Pop", "Population", getVal("kpi-population")],
-    [], // Empty row for spacing
-    // Education
+    [],
     ["Education", "Early Years", getVal("req-ey-sqm")],
     ["Education", "Primary Schools", getVal("req-primary-ha")],
     ["Education", "Secondary Schools", getVal("req-secondary-ha")],
     ["Education", "SEND Schools", getVal("req-send-ha")],
     ["Education", "Total Education Land", getVal("req-total-edu")],
     [],
-    // Health
     ["Health & Social", "Primary Care (GP)", getVal("req-gp-sqm")],
     ["Health & Social", "Dental Practices", getVal("req-dentist-sqm")],
     ["Health & Social", "Acute Hospital", getVal("req-acute-sqm")],
     ["Health & Social", "Mental Health", getVal("req-mental-sqm")],
     ["Health & Social", "Total Health Space", getVal("req-total-health")],
     [],
-    // Community
     ["Community", "Community Space", getVal("req-comm-sqm")],
     ["Community", "Art & Cultural", getVal("req-art-sqm")],
     ["Community", "Museums", getVal("req-museum-sqm")],
     ["Community", "Libraries", getVal("req-lib-sqm")],
     ["Community", "Total Community Space", getVal("req-total-comm")],
     [],
-    // Leisure
     ["Leisure", "Swimming Pools", getVal("req-pool-sqm")],
     ["Leisure", "Sports Halls", getVal("req-hall-sqm")],
     ["Leisure", "Indoor Bowls", getVal("req-bowls-count")],
     ["Leisure", "Total Leisure Space", getVal("req-total-leisure")],
     [],
-    // Open Space
     ["Open Space", "Parks & Gardens", getVal("req-parks-ha")],
     ["Open Space", "Amenity Green", getVal("req-amenity-ha")],
     ["Open Space", "Natural Space", getVal("req-natural-ha")],
@@ -1749,32 +1744,73 @@ window.exportToCSV = function () {
     ["Open Space", "Informal Play", getVal("req-play-inf-ha")],
     ["Open Space", "Total Open Space", getVal("req-total-open")],
     [],
-    // Capacity Check
     ["Capacity Check", "Required Land Take", getVal("cap-required")],
     ["Capacity Check", "Masterplan Allowance", getVal("cap-allowed")],
     ["Capacity Check", "Status", getVal("cap-status")],
   ];
 
-  // Convert array to CSV string
-  let csvContent = "data:text/csv;charset=utf-8,";
-  rows.forEach(function (rowArray) {
-    // Quote strings to handle any rogue commas inside the dashboard text (like the FE brackets)
-    const row = rowArray.map((item) => `"${item}"`).join(",");
-    csvContent += row + "\r\n";
+  // Convert to Excel sheet
+  const summarySheet = XLSX.utils.aoa_to_sheet(rows);
+
+  // ===============================
+  // 2. PARCEL DISTRIBUTION
+  // ===============================
+  const geojson = window.geojsonData;
+  const n2g = window.netToGrossEfficiency / 100;
+  const bands = [180, 150, 100, 70, 50, 30, 20];
+
+  const parcelHeaders = [
+    "Parcel ID",
+    "Land Use",
+    ...bands.map((b) => `Mix ${b} dph (%)`),
+    "Plot Area (ha)",
+    ...bands.map((b) => `Area @ ${b} dph (ha)`),
+    "Total Homes",
+  ];
+
+  const parcelRows = [parcelHeaders];
+
+  geojson.features.forEach((feature) => {
+    const props = feature.properties || {};
+
+    const parcelId = props.parcel_id || "";
+    const landuse = props.landuse || "";
+    const area = Number(props.shape_area_ha) || Number(props.plot_area_ha) || 0;
+
+    const mixes = bands.map((b) => Number(props[`density_mix_${b}dph`]) || 0);
+
+    const areasAtDensity = mixes.map((pct) => area * (pct / 100));
+
+    let totalHomes = 0;
+    bands.forEach((band, i) => {
+      totalHomes += areasAtDensity[i] * band * n2g;
+    });
+
+    parcelRows.push([
+      parcelId,
+      landuse,
+      ...mixes,
+      area,
+      ...areasAtDensity,
+      Math.round(totalHomes),
+    ]);
   });
 
-  // Create a hidden link and trigger the download
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
+  const parcelSheet = XLSX.utils.aoa_to_sheet(parcelRows);
 
-  // Add a timestamp to the filename
+  // ===============================
+  // 3. WORKBOOK
+  // ===============================
+  const wb = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+  XLSX.utils.book_append_sheet(wb, parcelSheet, "Parcel Distribution");
+
+  // ===============================
+  // 4. DOWNLOAD
+  // ===============================
   const date = new Date().toISOString().split("T")[0];
-  link.setAttribute("download", `Masterplan_Capacity_Report_${date}.csv`);
-
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  XLSX.writeFile(wb, `Masterplan_Capacity_Report_${date}.xlsx`);
 };
 
 // ==========================================
