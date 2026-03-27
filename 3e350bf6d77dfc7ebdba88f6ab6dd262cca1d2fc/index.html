@@ -1,0 +1,2423 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adlington Capacity Assessment</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://api.fontshare.com/v2/css?f[]=general-sans@300,400,500,600&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+    <link
+      href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app-container">
+      <div id="glass-sidebar" class="apple-glass-panel">
+        <div class="sidebar-header">
+          <h1 class="app-title">
+            <span class="brand-font">Adlington</span>
+            <span class="title-accent">Capacity Assessment</span>
+          </h1>
+        </div>
+
+        <div class="dashboard-container" style="padding-top: 0">
+          <div style="display: flex; gap: 12px">
+            <button
+              id="scenario1Btn"
+              onclick="loadScenario1()"
+              class="scenario-pill"
+              style="
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                border: none;
+                padding: 12px;
+              "
+            >
+              <span style="font-weight: 600">SCENARIO 1</span>
+              <span style="font-size: 0.95rem">LOW DENSITY</span>
+            </button>
+
+            <button
+              id="scenario2Btn"
+              onclick="loadScenario2()"
+              class="scenario-pill"
+              style="
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                border: none;
+                padding: 12px;
+              "
+            >
+              <span style="font-weight: 600">SCENARIO 2</span>
+              <span style="font-size: 0.95rem">HIGH DENSITY</span>
+            </button>
+          </div>
+          <div class="toggle-row">
+            <span>Bellport Ownership</span>
+            <label class="switch">
+              <input type="checkbox" id="toggleSwitch" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div
+            style="
+              display: flex;
+              border-bottom: 1px solid rgba(2, 36, 60, 0.1);
+              margin-bottom: 15px;
+            "
+          >
+            <button
+              id="tab-btn-housing"
+              class="tab-btn active"
+              onclick="switchTab('housing')"
+            >
+              Housing
+            </button>
+            <button
+              id="tab-btn-infra"
+              class="tab-btn"
+              onclick="switchTab('infra')"
+            >
+              Infrastructure
+            </button>
+          </div>
+
+          <div id="tab-content-housing" style="display: block">
+            <div style="display: flex; flex-direction: column; gap: 15px">
+              <div class="kpi-card">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 15px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0;
+                      color: var(--adl-slate);
+                      font-size: 0.9rem;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Total Housing Capacity
+                  </h3>
+                  <button
+                    class="btn-text-action"
+                    onclick="openEfficiencySettings()"
+                  >
+                    ⚙️ Adjust Assumptions
+                  </button>
+                </div>
+                <div style="display: flex; gap: 20px">
+                  <div style="flex: 1">
+                    <h4
+                      style="
+                        margin: 0 0 6px 0;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        color: var(--adl-slate);
+                        text-transform: uppercase;
+                      "
+                    >
+                      Homes
+                    </h4>
+                    <div class="kpi-mini-value" id="kpi-total-homes">0</div>
+                    <p
+                      class="kpi-label"
+                      id="kpi-efficiency-label"
+                      style="
+                        margin-top: 4px;
+                        font-size: 0.75rem;
+                        color: var(--adl-slate);
+                      "
+                    >
+                      60% Net-to-Gross
+                    </p>
+                  </div>
+                  <div style="flex: 1">
+                    <h4
+                      style="
+                        margin: 0 0 6px 0;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        color: var(--adl-slate);
+                        text-transform: uppercase;
+                      "
+                    >
+                      Population
+                    </h4>
+                    <div class="kpi-mini-value" id="kpi-population">0</div>
+                    <p
+                      class="kpi-label"
+                      id="kpi-pph-label"
+                      style="
+                        margin-top: 4px;
+                        font-size: 0.75rem;
+                        color: var(--adl-slate);
+                      "
+                    >
+                      @ 2.4 per home
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="kpi-card" style="border-left-color: var(--adl-sky)">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 15px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0;
+                      color: var(--adl-slate);
+                      font-size: 0.9rem;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Housing Typology Split
+                  </h3>
+                  <button class="btn-text-action" onclick="openSplitSettings()">
+                    ⚙️ Adjust Assumptions
+                  </button>
+                </div>
+                <div style="display: flex; gap: 20px">
+                  <div style="flex: 1">
+                    <h4
+                      style="
+                        margin: 0 0 6px 0;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        color: var(--adl-slate);
+                        text-transform: uppercase;
+                      "
+                    >
+                      Houses
+                    </h4>
+                    <div class="kpi-mini-value" id="kpi-houses">0</div>
+                  </div>
+                  <div style="flex: 1">
+                    <h4
+                      style="
+                        margin: 0 0 6px 0;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        color: var(--adl-slate);
+                        text-transform: uppercase;
+                      "
+                    >
+                      Flats
+                    </h4>
+                    <div class="kpi-mini-value" id="kpi-flats">0</div>
+                  </div>
+                </div>
+              </div>
+              <div class="kpi-card" style="border-left-color: var(--adl-sky)">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 15px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0;
+                      color: var(--adl-slate);
+                      font-size: 0.9rem;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Overall Average Density (DPH)
+                  </h3>
+                </div>
+                <div class="kpi-mini-value" id="kpi-overall-avg-density">0</div>
+              </div>
+              <div
+                class="kpi-card"
+                style="
+                  border-left-color: var(--adl-rust);
+                  padding-bottom: 0.5rem;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 10px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0;
+                      color: var(--adl-slate);
+                      font-size: 0.9rem;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Land Use Breakdown
+                  </h3>
+                </div>
+                <div id="landuseChart" style="height: 375px; width: 100%"></div>
+                <p
+                  style="
+                    text-align: center;
+                    font-size: 0.75rem;
+                    color: var(--adl-slate);
+                    margin-top: 5px;
+                    margin-bottom: 0;
+                  "
+                >
+                  Click a segment to filter the map
+                </p>
+              </div>
+              <div
+                class="kpi-card"
+                style="border-left-color: var(--adl-sky); margin-top: 15px"
+              >
+                <h3
+                  style="
+                    margin-bottom: 10px;
+                    font-size: 0.9rem;
+                    text-transform: uppercase;
+                  "
+                >
+                  Density Composition
+                </h3>
+                <div
+                  id="densityCompositionChart"
+                  style="height: 340px; width: 100%"
+                ></div>
+                <div
+                  id="densityLegend"
+                  style="margin-top: 8px; font-size: 0.75rem"
+                ></div>
+              </div>
+              <div
+                class="kpi-card"
+                style="border-left-color: var(--adl-slate); margin-top: 15px"
+              >
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0;
+                      color: var(--adl-slate);
+                      font-size: 0.9rem;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Capacity Check
+                  </h3>
+                  <button
+                    class="btn-text-action"
+                    onclick="openEfficiencySettings()"
+                  >
+                    ⚙️ Adjust Limit
+                  </button>
+                </div>
+
+                <p
+                  style="
+                    font-size: 0.8rem;
+                    color: var(--adl-slate);
+                    margin-bottom: 10px;
+                  "
+                >
+                  Assessing if required land exceeds the allowed masterplan
+                  threshold.
+                </p>
+
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    margin-bottom: 5px;
+                  "
+                >
+                  <span
+                    >Required Land Take:
+                    <span id="cap-required" style="color: var(--adl-midnight)"
+                      >0.00 ha</span
+                    ></span
+                  >
+                  <span
+                    >Max Allowance:
+                    <span id="cap-allowed" style="color: var(--adl-midnight)"
+                      >0.00 ha</span
+                    ></span
+                  >
+                </div>
+
+                <div
+                  id="capacity-track"
+                  style="
+                    display: flex;
+                    width: 100%;
+                    height: 40px;
+                    background: rgba(2, 36, 60, 0.05);
+                    border-radius: 10px;
+                    overflow: hidden;
+                    position: relative;
+                    border: 1px solid transparent;
+                  "
+                >
+                  <div
+                    id="cap-fill-res"
+                    style="
+                      height: 100%;
+                      width: 0%;
+                      background: #fcb243;
+                      transition: width 0.4s ease;
+                    "
+                    title="Residential"
+                  ></div>
+                  <div
+                    id="cap-fill-edu"
+                    style="
+                      height: 100%;
+                      width: 0%;
+                      background: #eb68b6;
+                      transition: width 0.4s ease;
+                    "
+                    title="Education"
+                  ></div>
+                  <div
+                    id="cap-fill-health"
+                    style="
+                      height: 100%;
+                      width: 0%;
+                      background: #ff7b55;
+                      transition: width 0.4s ease;
+                    "
+                    title="Health"
+                  ></div>
+                  <div
+                    id="cap-fill-comm"
+                    style="
+                      height: 100%;
+                      width: 0%;
+                      background: #ffad94;
+                      transition: width 0.4s ease;
+                    "
+                    title="Community"
+                  ></div>
+                  <div
+                    id="cap-fill-leisure"
+                    style="
+                      height: 100%;
+                      width: 0%;
+                      background: #9e9dbd;
+                      transition: width 0.4s ease;
+                    "
+                    title="Leisure"
+                  ></div>
+                </div>
+
+                <div
+                  style="
+                    display: flex;
+                    gap: 8px;
+                    font-size: 0.65rem;
+                    color: var(--adl-slate);
+                    margin-top: 8px;
+                    flex-wrap: wrap;
+                    text-transform: uppercase;
+                    font-weight: 600;
+                  "
+                >
+                  <div style="display: flex; align-items: center; gap: 3px">
+                    <span
+                      style="
+                        width: 8px;
+                        height: 8px;
+                        background: #fcb243;
+                        display: inline-block;
+                      "
+                    ></span>
+                    Net Residential Area
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 3px">
+                    <span
+                      style="
+                        width: 8px;
+                        height: 8px;
+                        background: #eb68b6;
+                        display: inline-block;
+                      "
+                    ></span>
+                    Education
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 3px">
+                    <span
+                      style="
+                        width: 8px;
+                        height: 8px;
+                        background: #ff7b55;
+                        display: inline-block;
+                      "
+                    ></span>
+                    Health & Social Care
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 3px">
+                    <span
+                      style="
+                        width: 8px;
+                        height: 8px;
+                        background: #ffad94;
+                        display: inline-block;
+                      "
+                    ></span>
+                    Community Services
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 3px">
+                    <span
+                      style="
+                        width: 8px;
+                        height: 8px;
+                        background: #9e9dbd;
+                        display: inline-block;
+                      "
+                    ></span>
+                    Leisure & Recreation
+                  </div>
+                </div>
+
+                <div
+                  style="
+                    text-align: right;
+                    margin-top: 5px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                  "
+                  id="cap-status"
+                >
+                  Under Capacity
+                </div>
+              </div>
+
+              <div
+                style="
+                  display: flex;
+                  gap: 10px;
+                  justify-content: stretch;
+                  margin-top: 5px;
+                "
+              >
+                <button
+                  class="methodology-pill"
+                  onclick="openMethodology()"
+                  style="
+                    flex: 1;
+                    justify-content: center;
+                    float: none;
+                    margin: 0;
+                  "
+                >
+                  <i>ⓘ</i> Formulas
+                </button>
+                <button
+                  onclick="exportToCSV()"
+                  class="methodology-pill"
+                  style="
+                    flex: 1;
+                    justify-content: center;
+                    float: none;
+                    margin: 0;
+                    background: var(--adl-sky);
+                    color: white;
+                    border: none;
+                  "
+                >
+                  <span style="font-size: 1.1rem; line-height: 1">↓</span>
+                  Export Data
+                </button>
+                <button
+                  onclick="resetGeoJsons()"
+                  class="methodology-pill"
+                  style="
+                    flex: 1;
+                    justify-content: center;
+                    float: none;
+                    margin: 0;
+                    background: var(--adl-rust);
+                    color: white;
+                    border: none;
+                  "
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+          <div id="tab-content-infra" style="display: none">
+            <div style="display: flex; flex-direction: column; gap: 15px">
+              <div class="kpi-card" style="border-left-color: #eb68b6">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0;
+                      color: var(--adl-slate);
+                      font-size: 0.9rem;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Education (ha)
+                  </h3>
+                  <button class="btn-text-action" onclick="openEduSettings()">
+                    ⚙️ Adjust Assumptions
+                  </button>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Early Years</span><strong id="req-ey-sqm">0</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Primary Schools (inc. EY)</span
+                  ><strong id="req-primary-ha">0.00</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Secondary Schools</span
+                  ><strong id="req-secondary-ha">0.00</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>SEND Schools</span
+                  ><strong id="req-send-ha">0.00</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 10px;
+                    padding-top: 10px;
+                    border-top: 1px solid rgba(2, 36, 60, 0.1);
+                    font-size: 0.9rem;
+                  "
+                >
+                  <strong>Total Education Land</strong
+                  ><strong id="req-total-edu" style="color: #eb68b6"
+                    >0.00</strong
+                  >
+                </div>
+              </div>
+
+              <div class="kpi-card" style="border-left-color: #ff7b55">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0;
+                      color: var(--adl-slate);
+                      font-size: 0.9rem;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Health & Social Care (sqm)
+                  </h3>
+                  <button
+                    class="btn-text-action"
+                    onclick="openHealthSettings()"
+                  >
+                    ⚙️ Adjust Assumptions
+                  </button>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Primary Health (GP)</span
+                  ><strong id="req-gp-sqm">0</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Dental Practices</span
+                  ><strong id="req-dentist-sqm">0</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Acute Hospitals</span
+                  ><strong id="req-acute-sqm">0</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Mental Health Hospitals</span
+                  ><strong id="req-mental-sqm">0</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 10px;
+                    padding-top: 10px;
+                    border-top: 1px solid rgba(2, 36, 60, 0.1);
+                    font-size: 0.9rem;
+                  "
+                >
+                  <strong>Total Health & Social Care Land</strong
+                  ><strong id="req-total-health" style="color: #ff7b55"
+                    >0</strong
+                  >
+                </div>
+              </div>
+
+              <div class="kpi-card" style="border-left-color: #ffad94">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0;
+                      color: var(--adl-slate);
+                      font-size: 0.9rem;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Community Services (sqm)
+                  </h3>
+                  <button class="btn-text-action" onclick="openCommSettings()">
+                    ⚙️ Adjust Assumptions
+                  </button>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Community Space</span
+                  ><strong id="req-comm-sqm">0</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Art & Cultural Space</span
+                  ><strong id="req-art-sqm">0</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Museums</span><strong id="req-museum-sqm">0</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Library Space</span><strong id="req-lib-sqm">0</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 10px;
+                    padding-top: 10px;
+                    border-top: 1px solid rgba(2, 36, 60, 0.1);
+                    font-size: 0.9rem;
+                  "
+                >
+                  <strong>Total Community Services Land</strong
+                  ><strong id="req-total-comm" style="color: #ffad94">0</strong>
+                </div>
+              </div>
+
+              <div class="kpi-card" style="border-left-color: #9e9dbd">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0;
+                      color: var(--adl-slate);
+                      font-size: 0.9rem;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Leisure & Recreation (sqm)
+                  </h3>
+                  <button
+                    class="btn-text-action"
+                    onclick="openLeisureSettings()"
+                  >
+                    ⚙️ Adjust Assumptions
+                  </button>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Swimming Pool (sqm)</span
+                  ><strong id="req-pool-sqm">0</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Sports Halls (sqm)</span
+                  ><strong id="req-hall-sqm">0</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Indoor Bowls (Centres)</span
+                  ><strong id="req-bowls-count">0</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 10px;
+                    padding-top: 10px;
+                    border-top: 1px solid rgba(2, 36, 60, 0.1);
+                    font-size: 0.9rem;
+                  "
+                >
+                  <strong>Total Leisure & Recreation Land</strong
+                  ><strong id="req-total-leisure" style="color: #9e9dbd"
+                    >0</strong
+                  >
+                </div>
+              </div>
+
+              <div class="kpi-card" style="border-left-color: #c3c83f">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0;
+                      color: var(--adl-slate);
+                      font-size: 0.9rem;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Open Space (ha)
+                  </h3>
+                  <button class="btn-text-action" onclick="openSpaceSettings()">
+                    ⚙️ Adjust Assumptions
+                  </button>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Parks & Gardens</span
+                  ><strong id="req-parks-ha">0.00</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Amenity Green Space</span
+                  ><strong id="req-amenity-ha">0.00</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Natural / Semi-Natural</span
+                  ><strong id="req-natural-ha">0.00</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Outdoor Sports Pitches</span
+                  ><strong id="req-pitches-ha">0.00</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Courts, Greens & Trails</span
+                  ><strong id="req-courts-ha">0.00</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Equipped Play Areas</span
+                  ><strong id="req-play-eq-ha">0.00</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                  "
+                >
+                  <span>Informal Play</span
+                  ><strong id="req-play-inf-ha">0.00</strong>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 10px;
+                    padding-top: 10px;
+                    border-top: 1px solid rgba(2, 36, 60, 0.1);
+                    font-size: 0.9rem;
+                  "
+                >
+                  <strong>Total Open Space Land</strong
+                  ><strong id="req-total-open" style="color: #c3c83f"
+                    >0.00</strong
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+        ☰ Dashboard
+      </button>
+
+      <div id="label-tooltip"></div>
+      <div id="map-container">
+        <div id="map"></div>
+        <div id="map-legend" class="glass-legend">
+          <h4 class="legend-title">Land Use</h4>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #d87beb"></span> Town
+            Centre
+          </div>
+
+          <div class="legend-item">
+            <span class="legend-color" style="background: #ffc8b8"></span> Local
+            Centre
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #9e9dbd"></span>
+            Employment
+          </div>
+
+          <h4 class="legend-title" style="margin-top: 15px">
+            Net Residential Density (dph)
+          </h4>
+          <div class="legend-gradient-bar"></div>
+          <div class="legend-gradient-labels">
+            <span id="density-min">Low</span>
+            <span id="density-max">High</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="efficiency-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3
+            class="brand-font"
+            style="margin: 0; font-size: 1.25rem; color: var(--adl-midnight)"
+          >
+            Capacity & Population Assumptions
+          </h3>
+          <button onclick="closeEfficiencySettings()" class="btn-close">
+            &times;
+          </button>
+        </div>
+        <p
+          style="
+            font-size: 0.85rem;
+            color: var(--adl-slate);
+            margin-bottom: 15px;
+            line-height: 1.4;
+          "
+        >
+          Set the site-wide assumptions for housing calculations and capacity
+          limits.
+        </p>
+
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.05);
+          "
+        >
+          <span style="font-size: 0.85rem; font-weight: 600"
+            >Net-to-Gross Efficiency</span
+          >
+          <div style="display: flex; align-items: center; gap: 8px">
+            <input
+              type="number"
+              id="input-efficiency"
+              value="50"
+              min="0"
+              max="100"
+              class="clean-number-input"
+            />
+            <span
+              style="
+                font-size: 0.85rem;
+                color: var(--adl-slate);
+                font-weight: 600;
+              "
+              >%</span
+            >
+          </div>
+        </div>
+
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.05);
+          "
+        >
+          <span style="font-size: 0.85rem; font-weight: 600"
+            >People per Home</span
+          >
+          <div style="display: flex; align-items: center; gap: 8px">
+            <input
+              type="number"
+              id="input-pph"
+              value="2.4"
+              step="0.1"
+              min="0"
+              class="clean-number-input"
+            />
+            <span
+              style="
+                font-size: 0.85rem;
+                color: transparent;
+                font-weight: 600;
+                user-select: none;
+              "
+              >%</span
+            >
+          </div>
+        </div>
+
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.05);
+          "
+        >
+          <span
+            style="font-size: 0.85rem; font-weight: 600; color: var(--adl-rust)"
+            >Max Development Limit</span
+          >
+          <div style="display: flex; align-items: center; gap: 8px">
+            <input
+              type="number"
+              id="input-masterplan-cap"
+              value="50"
+              min="0"
+              max="100"
+              class="clean-number-input"
+            />
+            <span
+              style="
+                font-size: 0.85rem;
+                color: var(--adl-slate);
+                font-weight: 600;
+              "
+              >%</span
+            >
+          </div>
+        </div>
+
+        <button class="btn-save" onclick="saveEfficiencySettings()">
+          Apply Changes
+        </button>
+      </div>
+    </div>
+
+    <div id="split-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3
+            class="brand-font"
+            style="margin: 0; font-size: 1.25rem; color: var(--adl-midnight)"
+          >
+            Typology Split
+          </h3>
+          <button onclick="closeSplitSettings()" class="btn-close">
+            &times;
+          </button>
+        </div>
+        <p
+          style="
+            font-size: 0.85rem;
+            color: var(--adl-slate);
+            margin-bottom: 15px;
+            line-height: 1.4;
+          "
+        >
+          Set the percentage of <strong>Flats</strong> per density band. The
+          remainder will automatically be allocated to Houses.
+        </p>
+        <div id="split-inputs-container"></div>
+        <button
+          class="btn-save"
+          style="margin-top: 15px"
+          onclick="saveSplitSettings()"
+        >
+          Apply Changes
+        </button>
+      </div>
+    </div>
+
+    <div id="edu-modal" class="modal-overlay" style="display: none">
+      <div
+        class="modal-content"
+        style="max-height: 90vh; overflow-y: auto; width: 360px"
+      >
+        <div class="modal-header">
+          <h3
+            class="brand-font"
+            style="margin: 0; font-size: 1.25rem; color: var(--adl-midnight)"
+          >
+            Education
+          </h3>
+          <button onclick="closeEduSettings()" class="btn-close">
+            &times;
+          </button>
+        </div>
+        <h4
+          style="
+            margin: 10px 0 5px;
+            font-size: 0.9rem;
+            color: #eb68b6;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.1);
+            padding-bottom: 4px;
+          "
+        >
+          Early Years
+        </h4>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Pupil Yield per home</span>
+          <input
+            type="number"
+            id="edu-ey-yield"
+            step="0.01"
+            class="clean-number-input"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Places per nursery</span>
+          <input
+            type="number"
+            id="edu-ey-places"
+            step="1"
+            class="clean-number-input"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Internal sqm per place</span>
+          <input
+            type="number"
+            id="edu-ey-sqm"
+            step="0.1"
+            class="clean-number-input"
+          />
+        </div>
+
+        <h4
+          style="
+            margin: 10px 0 5px;
+            font-size: 0.9rem;
+            color: #eb68b6;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.1);
+            padding-bottom: 4px;
+          "
+        >
+          Primary Schools (inc. Early Years)
+        </h4>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Pupil Yield per home</span>
+          <input
+            type="number"
+            id="edu-pri-yield"
+            step="0.01"
+            class="clean-number-input"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Pupils per 1FE</span>
+          <input type="number" id="edu-pri-fe" class="clean-number-input" />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Area per FE (ha)</span>
+          <input
+            type="number"
+            id="edu-pri-ha"
+            step="0.1"
+            class="clean-number-input"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Standard School Size (FE)</span>
+          <input
+            type="number"
+            id="edu-pri-size"
+            step="1"
+            class="clean-number-input"
+          />
+        </div>
+
+        <h4
+          style="
+            margin: 10px 0 5px;
+            font-size: 0.9rem;
+            color: #eb68b6;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.1);
+            padding-bottom: 4px;
+          "
+        >
+          Secondary Schools
+        </h4>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Pupil Yield per home</span>
+          <input
+            type="number"
+            id="edu-sec-yield"
+            step="0.01"
+            class="clean-number-input"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Pupils per 1FE</span>
+          <input type="number" id="edu-sec-fe" class="clean-number-input" />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Area per FE (ha)</span>
+          <input
+            type="number"
+            id="edu-sec-ha"
+            step="0.1"
+            class="clean-number-input"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Standard School Size (FE)</span>
+          <input
+            type="number"
+            id="edu-sec-size"
+            step="1"
+            class="clean-number-input"
+          />
+        </div>
+
+        <h4
+          style="
+            margin: 10px 0 5px;
+            font-size: 0.9rem;
+            color: #eb68b6;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.1);
+            padding-bottom: 4px;
+          "
+        >
+          SEND Schools
+        </h4>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Pupils per home</span>
+          <input
+            type="number"
+            id="edu-send-yield"
+            step="0.01"
+            class="clean-number-input"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Area per school (ha)</span>
+          <input
+            type="number"
+            id="edu-send-ha"
+            step="0.1"
+            class="clean-number-input"
+          />
+        </div>
+
+        <button class="btn-save" onclick="saveEduSettings()">
+          Apply Changes
+        </button>
+      </div>
+    </div>
+
+    <div id="health-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content" style="width: 360px">
+        <div class="modal-header">
+          <h3
+            class="brand-font"
+            style="margin: 0; font-size: 1.25rem; color: var(--adl-midnight)"
+          >
+            Health & Social Care
+          </h3>
+          <button onclick="closeHealthSettings()" class="btn-close">
+            &times;
+          </button>
+        </div>
+
+        <h4
+          style="
+            margin: 10px 0 5px;
+            font-size: 0.9rem;
+            color: #ff7b55;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.1);
+            padding-bottom: 4px;
+          "
+        >
+          Primary Care (GP)
+        </h4>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>People per GP</span>
+          <input
+            type="number"
+            id="health-gp-pop"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Sqm per GP</span>
+          <input
+            type="number"
+            id="health-gp-sqm"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+
+        <h4
+          style="
+            margin: 10px 0 5px;
+            font-size: 0.9rem;
+            color: #ff7b55;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.1);
+            padding-bottom: 4px;
+          "
+        >
+          Dental Practices
+        </h4>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>People per Dentist</span>
+          <input
+            type="number"
+            id="health-den-pop"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Sqm per Dentist</span>
+          <input
+            type="number"
+            id="health-den-sqm"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+
+        <h4
+          style="
+            margin: 10px 0 5px;
+            font-size: 0.9rem;
+            color: #ff7b55;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.1);
+            padding-bottom: 4px;
+          "
+        >
+          Acute Hospitals
+        </h4>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Beds per 1000 people</span>
+          <input
+            type="number"
+            id="health-acute-beds"
+            step="0.1"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Sqm per Acute Bed</span>
+          <input
+            type="number"
+            id="health-acute-sqm"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <h4
+          style="
+            margin: 10px 0 5px;
+            font-size: 0.9rem;
+            color: #ff7b55;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.1);
+            padding-bottom: 4px;
+          "
+        >
+          Mental Health
+        </h4>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Beds per 1000 people</span>
+          <input
+            type="number"
+            id="health-mental-beds"
+            step="0.000001"
+            class="clean-number-input"
+            style="width: 85px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Sqm per Bed</span>
+          <input
+            type="number"
+            id="health-mental-sqm"
+            step="0.1"
+            class="clean-number-input"
+            style="width: 70px"
+          />
+        </div>
+
+        <button class="btn-save" onclick="saveHealthSettings()">
+          Apply Changes
+        </button>
+      </div>
+    </div>
+
+    <div id="comm-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content" style="width: 360px">
+        <div class="modal-header">
+          <h3
+            class="brand-font"
+            style="margin: 0; font-size: 1.25rem; color: var(--adl-midnight)"
+          >
+            Community Services
+          </h3>
+          <button onclick="closeCommSettings()" class="btn-close">
+            &times;
+          </button>
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Community Space</span>
+          <input
+            type="number"
+            id="comm-space"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Art & Cultural Space</span>
+          <input
+            type="number"
+            id="comm-art"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Museums</span>
+          <input
+            type="number"
+            id="comm-museum"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Library Space</span>
+          <input
+            type="number"
+            id="comm-lib"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <button class="btn-save" onclick="saveCommSettings()">
+          Apply Changes
+        </button>
+      </div>
+    </div>
+
+    <div id="leisure-modal" class="modal-overlay" style="display: none">
+      <div
+        class="modal-content"
+        style="max-height: 90vh; overflow-y: auto; width: 360px"
+      >
+        <div class="modal-header">
+          <h3
+            class="brand-font"
+            style="margin: 0; font-size: 1.25rem; color: var(--adl-midnight)"
+          >
+            Leisure & Recreation
+          </h3>
+          <button onclick="closeLeisureSettings()" class="btn-close">
+            &times;
+          </button>
+        </div>
+        <h4
+          style="
+            margin: 10px 0 5px;
+            font-size: 0.9rem;
+            color: #9e9dbd;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.1);
+            padding-bottom: 4px;
+          "
+        >
+          Swimming Pools
+        </h4>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>People per 4-lane Pool</span>
+          <input
+            type="number"
+            id="leisure-pool-pop"
+            class="clean-number-input"
+            style="width: 70px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Sqm per Pool</span>
+          <input
+            type="number"
+            id="leisure-pool-sqm"
+            class="clean-number-input"
+            style="width: 70px"
+          />
+        </div>
+
+        <h4
+          style="
+            margin: 10px 0 5px;
+            font-size: 0.9rem;
+            color: #9e9dbd;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.1);
+            padding-bottom: 4px;
+          "
+        >
+          Sports Halls
+        </h4>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>People per 4-court Hall</span>
+          <input
+            type="number"
+            id="leisure-hall-pop"
+            class="clean-number-input"
+            style="width: 70px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Sqm per Hall</span>
+          <input
+            type="number"
+            id="leisure-hall-sqm"
+            class="clean-number-input"
+            style="width: 70px"
+          />
+        </div>
+
+        <h4
+          style="
+            margin: 10px 0 5px;
+            font-size: 0.9rem;
+            color: #9e9dbd;
+            border-bottom: 1px solid rgba(2, 36, 60, 0.1);
+            padding-bottom: 4px;
+          "
+        >
+          Indoor Bowls
+        </h4>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>People per Bowls Centre</span>
+          <input
+            type="number"
+            id="leisure-bowls-pop"
+            class="clean-number-input"
+            style="width: 70px"
+          />
+        </div>
+
+        <button class="btn-save" onclick="saveLeisureSettings()">
+          Apply Changes
+        </button>
+      </div>
+    </div>
+
+    <div id="space-modal" class="modal-overlay" style="display: none">
+      <div
+        class="modal-content"
+        style="max-height: 90vh; overflow-y: auto; width: 360px"
+      >
+        <div class="modal-header">
+          <h3
+            class="brand-font"
+            style="margin: 0; font-size: 1.25rem; color: var(--adl-midnight)"
+          >
+            Open Space
+          </h3>
+          <button onclick="closeSpaceSettings()" class="btn-close">
+            &times;
+          </button>
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Parks and Gardens</span>
+          <input
+            type="number"
+            id="space-parks"
+            step="0.1"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Amenity Green Space</span>
+          <input
+            type="number"
+            id="space-amenity"
+            step="0.1"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Natural / Semi-Natural</span>
+          <input
+            type="number"
+            id="space-natural"
+            step="0.1"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Outdoor Sports Pitches</span>
+          <input
+            type="number"
+            id="space-pitches"
+            step="0.1"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Courts, Greens & Trails</span>
+          <input
+            type="number"
+            id="space-courts"
+            step="0.1"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Equipped Play Areas</span>
+          <input
+            type="number"
+            id="space-play-eq"
+            step="0.1"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            align-items: center;
+          "
+        >
+          <span>Informal Play</span>
+          <input
+            type="number"
+            id="space-play-inf"
+            step="0.1"
+            class="clean-number-input"
+            style="width: 60px"
+          />
+        </div>
+        <button class="btn-save" onclick="saveSpaceSettings()">
+          Apply Changes
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="methodology-modal"
+      class="modal-overlay"
+      style="display: none; background: rgba(2, 36, 60, 0.9)"
+    >
+      <div
+        class="modal-content"
+        style="
+          width: 95%;
+          max-width: 1200px;
+          max-height: 90vh;
+          overflow-y: auto;
+          border-left: 10px solid var(--adl-sky);
+          padding: 2.5rem;
+          border-radius: 0;
+        "
+      >
+        <div
+          class="modal-header"
+          style="
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+          "
+        >
+          <h1
+            class="brand-font"
+            style="margin: 0; font-size: 2.2rem; color: var(--adl-midnight)"
+          >
+            Technical Methodology & Standards
+          </h1>
+          <button
+            onclick="closeMethodology()"
+            class="btn-close"
+            style="font-size: 2.5rem"
+          >
+            &times;
+          </button>
+        </div>
+
+        <h2
+          style="
+            color: var(--adl-midnight);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--adl-midnight);
+            display: inline-block;
+          "
+        >
+          1. Site Capacity & Population
+        </h2>
+        <div class="methodology-list" style="margin-bottom: 30px">
+          <div class="meth-item">
+            <span><strong>Housing Yield</strong></span
+            ><span
+              >Plot Area (ha) × <span id="m-eff">50</span>% Net-to-Gross ×
+              Density (dph)</span
+            ><em>Determines Total Homes</em>
+          </div>
+          <div class="meth-item">
+            <span><strong>Population</strong></span
+            ><span
+              >Total Homes × <span id="m-pph">2.4</span> People Per Home</span
+            ><em>Determines Site Population</em>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px">
+          <div>
+            <h2
+              style="
+                color: #eb68b6;
+                text-transform: uppercase;
+                font-size: 0.9rem;
+                letter-spacing: 0.1em;
+                margin-bottom: 15px;
+                border-bottom: 2px solid #eb68b6;
+                display: inline-block;
+              "
+            >
+              2. Education (Pink)
+            </h2>
+            <div class="methodology-list">
+              <div class="meth-item">
+                <span><strong>Early Years</strong></span
+                ><span
+                  >(Homes × <span id="m-ey-yield">0.10</span>) ×
+                  <span id="m-ey-sqm">2.3</span> sqm</span
+                ><em>Per DfE Standard</em>
+              </div>
+              <div class="meth-item">
+                <span><strong>Primary Schools</strong></span
+                ><span
+                  >((Homes × <span id="m-pri-yield">0.29</span>) /
+                  <span id="m-pri-fe">210</span>) ×
+                  <span id="m-pri-ha">1.0</span> ha</span
+                ><em>1 FE = 210 Pupils</em>
+              </div>
+              <div class="meth-item">
+                <span><strong>Secondary Schools</strong></span
+                ><span
+                  >((Homes × <span id="m-sec-yield">0.14</span>) /
+                  <span id="m-sec-fe">150</span>) ×
+                  <span id="m-sec-ha">1.3</span> ha</span
+                ><em>1 FE = 150 Pupils</em>
+              </div>
+              <div class="meth-item">
+                <span><strong>SEND Schools</strong></span
+                ><span
+                  >Static <span id="m-send-ha">1.5</span> ha plot if yield >
+                  0</span
+                ><em>Baseline Provision</em>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h2
+              style="
+                color: #ff7b55;
+                text-transform: uppercase;
+                font-size: 0.9rem;
+                letter-spacing: 0.1em;
+                margin-bottom: 15px;
+                border-bottom: 2px solid #ff7b55;
+                display: inline-block;
+              "
+            >
+              3. Health & Social Care (Orange)
+            </h2>
+            <div class="methodology-list">
+              <div class="meth-item">
+                <span><strong>Primary Care (GP)</strong></span
+                ><span
+                  >(Pop / <span id="m-gp-pop">1800</span>) ×
+                  <span id="m-gp-sqm">165</span> sqm</span
+                >
+              </div>
+              <div class="meth-item">
+                <span><strong>Dental Practices</strong></span
+                ><span
+                  >(Pop / <span id="m-den-pop">2000</span>) ×
+                  <span id="m-den-sqm">100</span> sqm</span
+                >
+              </div>
+              <div class="meth-item">
+                <span><strong>Acute Hospitals</strong></span
+                ><span
+                  >(Pop / 1000) × <span id="m-acute-beds">2.4</span> beds ×
+                  <span id="m-acute-sqm">48</span> sqm</span
+                >
+              </div>
+              <div class="meth-item">
+                <span><strong>Mental Health</strong></span
+                ><span
+                  >(Pop / 1000) × <span id="m-mental-beds">0.000274</span> ×
+                  <span id="m-mental-sqm">48.9</span> sqm</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h2
+              style="
+                color: #ffad94;
+                text-transform: uppercase;
+                font-size: 0.9rem;
+                letter-spacing: 0.1em;
+                margin-bottom: 15px;
+                border-bottom: 2px solid #ffad94;
+                display: inline-block;
+              "
+            >
+              4. Community (Peach)
+            </h2>
+            <div class="methodology-list">
+              <div class="meth-item">
+                <span><strong>Community Space</strong></span
+                ><span
+                  >(Pop / 1000) × <span id="m-comm-space">65</span> sqm</span
+                >
+              </div>
+              <div class="meth-item">
+                <span><strong>Arts & Culture</strong></span
+                ><span>(Pop / 1000) × <span id="m-comm-art">45</span> sqm</span>
+              </div>
+              <div class="meth-item">
+                <span><strong>Museums</strong></span
+                ><span
+                  >(Pop / 1000) × <span id="m-comm-museum">28</span> sqm</span
+                >
+              </div>
+              <div class="meth-item">
+                <span><strong>Libraries</strong></span
+                ><span>(Pop / 1000) × <span id="m-comm-lib">30</span> sqm</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h2
+              style="
+                color: #9e9dbd;
+                text-transform: uppercase;
+                font-size: 0.9rem;
+                letter-spacing: 0.1em;
+                margin-bottom: 15px;
+                border-bottom: 2px solid #9e9dbd;
+                display: inline-block;
+              "
+            >
+              5. Leisure (Purple)
+            </h2>
+            <div class="methodology-list">
+              <div class="meth-item">
+                <span><strong>Swimming Pools</strong></span
+                ><span
+                  >(Pop / <span id="m-pool-pop">20211</span>) ×
+                  <span id="m-pool-sqm">935</span> sqm</span
+                >
+              </div>
+              <div class="meth-item">
+                <span><strong>Sports Halls</strong></span
+                ><span
+                  >(Pop / <span id="m-hall-pop">14561</span>) ×
+                  <span id="m-hall-sqm">1100</span> sqm</span
+                >
+              </div>
+              <div class="meth-item">
+                <span><strong>Indoor Bowls</strong></span
+                ><span
+                  >Pop / <span id="m-bowls-pop">88849</span> (Centres
+                  required)</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 40px">
+          <h2
+            style="
+              color: #c3c83f;
+              text-transform: uppercase;
+              font-size: 0.9rem;
+              letter-spacing: 0.1em;
+              margin-bottom: 15px;
+              border-bottom: 2px solid #c3c83f;
+              display: inline-block;
+            "
+          >
+            6. Open Space & Sports (Green - ha per 1k)
+          </h2>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px">
+            <div class="methodology-list">
+              <div class="meth-item">
+                <span><strong>Parks & Gardens</strong></span
+                ><span
+                  >(Pop / 1000) × <span id="m-space-parks">0.80</span> ha</span
+                >
+              </div>
+              <div class="meth-item">
+                <span><strong>Amenity Green</strong></span
+                ><span
+                  >(Pop / 1000) ×
+                  <span id="m-space-amenity">0.60</span> ha</span
+                >
+              </div>
+              <div class="meth-item">
+                <span><strong>Natural Space</strong></span
+                ><span
+                  >(Pop / 1000) ×
+                  <span id="m-space-natural">1.80</span> ha</span
+                >
+              </div>
+              <div class="meth-item">
+                <span><strong>Sports Pitches</strong></span
+                ><span
+                  >(Pop / 1000) ×
+                  <span id="m-space-pitches">1.20</span> ha</span
+                >
+              </div>
+            </div>
+            <div class="methodology-list">
+              <div class="meth-item">
+                <span><strong>Courts & Tracks</strong></span
+                ><span
+                  >(Pop / 1000) × <span id="m-space-courts">0.40</span> ha</span
+                >
+              </div>
+              <div class="meth-item">
+                <span><strong>Equipped Play</strong></span
+                ><span
+                  >(Pop / 1000) ×
+                  <span id="m-space-play-eq">0.25</span> ha</span
+                >
+              </div>
+              <div class="meth-item">
+                <span><strong>Informal Play</strong></span
+                ><span
+                  >(Pop / 1000) ×
+                  <span id="m-space-play-inf">0.30</span> ha</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
