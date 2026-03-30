@@ -940,6 +940,11 @@ window.saveParcelData = function (parcelId) {
       "adl_geojsonDataScenario2",
       JSON.stringify(window.geojsonData),
     );
+  } else if (currentScenario === "scenario3") {
+    localStorage.setItem(
+      "adl_geojsonDataScenario3",
+      JSON.stringify(window.geojsonData),
+    );
   }
 
   const popups = document.getElementsByClassName("maplibregl-popup");
@@ -1857,12 +1862,37 @@ window.loadScenario2 = async function () {
   }
 };
 
+window.loadScenario3 = async function () {
+  const savedGeojson = localStorage.getItem("adl_geojsonDataScenario3");
+
+  if (savedGeojson) {
+    window.geojsonData = JSON.parse(savedGeojson);
+    currentScenario = "scenario3";
+    setActiveButton("scenario3Btn");
+    startupApp(window.geojsonData);
+  } else {
+    try {
+      const response = await fetch(
+        "data/addlington_plots_belport_ownership_scenario1.geojson",
+      );
+      window.geojsonData = await response.json();
+      currentScenario = "scenario3";
+      setActiveButton("scenario3Btn");
+      startupApp(window.geojsonData);
+    } catch (err) {
+      console.warn("Could not load geojson.", err);
+    }
+  }
+};
+
 function setActiveButton(activeId) {
   const btn1 = document.getElementById("scenario1Btn");
   const btn2 = document.getElementById("scenario2Btn");
+  const btn3 = document.getElementById("scenario3Btn");
 
-  btn1.classList.remove("active");
-  btn2.classList.remove("active");
+  if (btn1) btn1.classList.remove("active");
+  if (btn2) btn2.classList.remove("active");
+  if (btn3) btn3.classList.remove("active");
 
   document.getElementById(activeId).classList.add("active");
 }
@@ -1871,6 +1901,7 @@ window.resetGeoJsons = async function () {
   try {
     localStorage.removeItem("adl_geojsonDataScenario1");
     localStorage.removeItem("adl_geojsonDataScenario2");
+    localStorage.removeItem("adl_geojsonDataScenario3");
     const response = await fetch("data/addlington_plots_scenario1.geojson");
     window.geojsonData = await response.json();
     currentScenario = "scenario1";
