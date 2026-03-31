@@ -1960,7 +1960,7 @@ window.addOwnershipJson = async function () {
       type: "fill",
       source: "addlington-ownership",
       paint: {
-        "fill-color": "#3e3e3e",
+        "fill-color": "#1943b9",
         "fill-opacity": 0.1,
       },
     });
